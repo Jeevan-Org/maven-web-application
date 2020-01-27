@@ -1,0 +1,42 @@
+node
+{
+   properties([
+    buildDiscarder(logRotator(numToKeepStr: '3')),
+    pipelineTriggers([
+        pollSCM('* * * * *')
+    ])
+  ])
+    def mavenHome=tool name: "Maven_Home"
+    stage('CheckOutFromGIt')
+    {
+        git credentialsId: '4dbdb305-6927-4f73-acb9-41ae2a652fed', url: 'https://github.com/Jeevan-Org/maven-web-application.git'
+    }
+    stage('maven')
+    {
+     sh "${mavenHome}/bin/mvn clean package"   
+    }
+    stage('SonarReport')
+    {
+        sh "${mavenHome}/bin/mvn clean sonar:sonar"
+    }
+    stage('UploadToNexusRepo')
+    {
+        sh "${mavenHome}/bin/mvn clean deploy"
+    }
+    stage('DeployToTomcat')
+    {
+        sshagent(['b34b1fed-e5df-4582-ac8a-ddb89a3437b8']) {
+    sh "scp -o StrictHostKeyChecking=no target/*.war ec2-user@13.127.218.21:/opt/apache-tomcat-9.0.30/webapps/"
+}
+    }
+    stage('EmailNotification')
+    {
+        emailext body: '''This is completed successfully.
+
+Regards,
+Jeevan''', subject: 'Build Success', to: 'djeevan@gmail.com,sdakshir@gmail.com'
+    }
+    
+    
+    
+}
