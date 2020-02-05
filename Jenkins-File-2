@@ -1,0 +1,30 @@
+node {
+    def Mavenhome=tool name:"Maven_Home"
+    stage("CheckOutCodeFromGit")
+    {
+        git credentialsId: 'b0d167ce-fd57-4b97-a44f-0f6dc5202dcd', url: 'https://github.com/Jeevan-Org/maven-web-application.git'
+    }
+    stage("Build")
+    {
+        sh "${Mavenhome}/bin/mvn clean package"
+    }
+    stage("SonarQubeReport")
+    {
+        sh "${Mavenhome}/bin/mvn clean sonar:sonar"
+    }
+    stage("ArtiFactsRepo")
+    {
+        sh "${Mavenhome}/bin/mvn clean deploy"
+    }
+    stage("deployTOTomcat")
+    {
+        sshagent(['32927467-25be-49cb-9b57-c63433991281']) {
+   sh "scp -o StrictHostKeyChecking=no target/*.war ec2-user@18.140.53.95:/opt/apache-tomcat-8.5.50/webapps"
+}
+    }
+    stage("email")
+    {
+        emailext body: '''Regards,
+Jeevan''', subject: 'Build Success', to: 'djeevan12@gmail.com'
+    }
+}
