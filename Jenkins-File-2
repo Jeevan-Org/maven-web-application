@@ -20,6 +20,7 @@ node("Slave") {
     {
         sh "${Mavenhome}/bin/mvn clean package"
     }
+    /*
     stage("SonarQubeReport")
     {
         sh "${Mavenhome}/bin/mvn clean sonar:sonar"
@@ -39,4 +40,5 @@ node("Slave") {
         emailext body: '''Regards,
 Jeevan''', subject: 'Build Success', to: 'djeevan12@gmail.com'
     }
+    */
 }
